@@ -84,13 +84,14 @@ export function loginUser(req,res){
 
                 }
 
-                // console.log(userData);
+                 console.log(userData);
 
                 const token = jwt.sign(userData,process.env.JWT_KEY);
 
                 res.json({
                     message:"login successful",
                     token:token,
+                    user: userData,
                 });
 
             }
