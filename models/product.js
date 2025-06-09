@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 const productSchema = new mongoose.Schema({
+
+    //productID,name,price,lebeledPrice,stock
     productID:{
         type: String,
         required:true,

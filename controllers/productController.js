@@ -22,6 +22,7 @@ export async function createProduct(req, res) {
       
     })
   }catch (err) {
+    console.log(err);
     res.status(500).json({
       message:"Produt not saved"
     })
