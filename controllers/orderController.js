@@ -1,6 +1,7 @@
 import Order from "../models/order.js";
+import Product from "../models/product.js";
 
-export function createOrder(req, res) {
+export async function createOrder(req, res) {
     if (req.user == null) {
         res.status(401).json({
             message: "Unauthorized",
@@ -22,7 +23,7 @@ export function createOrder(req, res) {
         .sort({
             date: -1,
         })
-        .limit(1).then((lastBills) => {
+        .limit(1).then(async(lastBills) => {
             if (lastBills.length == 0) {
                 orderData.orderId = "ORD0001";
             }else{
@@ -36,17 +37,33 @@ export function createOrder(req, res) {
                 orderData.orderId = "ORD" + newOrderNumberStr;
             }
 
-           // for(let i = 0; i< body.billItems.length; i++){
+           for(let i = 0; i< body.billItems.length; i++){
+                const product = await Product.findOne({productID:body.billItems[i].productID});  
+                if(product==null){
+                    res.status(404).json({
+                        message:"Product with product id " + body.billItems[i].productID+"not found"
+                        
+                    })
+                    return;
+                }
+                orderData.billItems[i]={
+                    productID:product.productID,
+                    productName:product.name,
+                    image:product.images[0],
+                    quantity:body.billItems[i].quantity,
+                    price:product.price
+
+                };
+                orderData.total=orderData.total + product.price * body.billItems[i].quantity
+
+           }
                 
-                //const billItem = body.billItems[i];
+               
 
-                //check if product exists
-
-            
-
-           // orderData.orderId = newOrderId;
-           
             const order = new Order(orderData);
+
+
+
             order.save().then(() => {
                 res.json({
                     message: "Order saved successfully",
