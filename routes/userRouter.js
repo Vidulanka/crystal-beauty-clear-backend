@@ -1,10 +1,11 @@
 import express from "express";
-import { loginUser, saveUser } from "../controllers/userControllers.js";
+import { googleLogin, loginUser, saveUser } from "../controllers/userControllers.js";
 
 const userRouter = express.Router();
 
 userRouter.post("/", saveUser)
 userRouter.post("/login",loginUser)
+userRouter.post("/google",googleLogin)
 
 
 export default userRouter;
