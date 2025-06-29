@@ -7,6 +7,7 @@ import verifyJWT from "./middleware/auth.js";
 import orderRouter from "./routes/orderRouter.js";
 import cors from "cors";
 import dotenv from "dotenv";
+import contactRouter from "./routes/contactRouter.js";
 dotenv.config()
 
 const app = express();
@@ -32,6 +33,11 @@ mongoose.connect(process.env.MONGO_URL).then(
 
 
 app.use(bodyParser.json());
+// Public route for contact form
+app.use("/api/contact",contactRouter)
+
+
+// JWT verification middleware for protected routes
 app.use(verifyJWT )
 
 
