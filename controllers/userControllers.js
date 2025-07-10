@@ -3,7 +3,19 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import axios from "axios";
+import nodemailer from "nodemailer";
+import { OTP } from "../models/otp.js";
 dotenv.config()
+const transport = nodemailer.createTransport({
+	service: "gmail",
+	host: "smtp.gmail.com",
+	port : 587,
+	secure: false,
+	auth: {
+		user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+	},
+})
 
 export function saveUser (req,res){
 if (req.body.role == "admin"){
@@ -192,6 +204,88 @@ export function getCurrentUser(req,res){
 	res.json({
 		user : req.user
 	})
+}
+
+export function sendOTP(req,res){
+	const email = req.body.email;
+	const otp = Math.floor(Math.random()*9000) + 1000;
+
+	const message = {
+		from :  process.env.EMAIL_USER,
+		to : email,
+		subject : "OTP for email verification",
+		text : "Your OTP is : "+otp
+	}
+
+	const newOtp = new OTP({
+		email : email,
+		otp : otp
+	})
+
+	newOtp.save().then(()=>{
+		console.log("OTP saved successfully")
+	})
+
+	transport.sendMail(message,(err,info)=>{
+		if(err){
+			console.log(err);
+			res.status(500).json({
+				message : "Error sending email"
+			})
+		}else{
+			res.json({
+				message : "OTP sent successfully",
+				otp : otp
+			})
+		}
+	})
+}
+
+export async function changePassword(req,res){
+	const email = req.body.email;
+	const password = req.body.password;
+	const otp = req.body.otp;
+	try{
+		//get latest otp from db
+		const lastOTPData = await OTP.findOne({
+			email : email
+		}).sort({createdAt : -1})
+
+		if(lastOTPData == null){
+			res.status(404).json({
+				message : "No OTP found for this email"
+			})
+			return;
+		}
+		if(lastOTPData.otp != otp){
+			res.status(403).json({
+				message : "Invalid OTP"
+			})
+			return;
+		}
+
+		const hashedPassword = bcrypt.hashSync(password, 10);
+		await User.updateOne({
+			email : email
+		},{
+			password : hashedPassword
+		})
+		await OTP.deleteMany({
+			email : email
+		})
+		res.json({
+			message : "Password changed successfully"
+		})
+
+		
+
+	}catch(e){
+		res.status(500).json({
+			message : "Error changing password"
+		})
+	}
+	
+
 }
 
 
